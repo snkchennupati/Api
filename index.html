@@ -36,6 +36,7 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
         .skeleton-line {
             background-color: #30363d;
@@ -56,31 +57,31 @@
         }
     </style>
 </head>
-<body class="p-4 md:p-8 text-gray-200">
+<body class="p-4 md:p-8 text-gray-200" oncontextmenu="return false;">
 
     <div class="container mx-auto">
-        <h1 class="text-4xl font-bold mb-8 text-green-400 border-b border-gray-700 pb-3">Skill Evaluation Tool</h1>
+        <h1 class="text-4xl font-bold mb-8 text-green-400 border-b border-gray-700 pb-3">Technical Quiz Portal</h1>
 
-        <!-- API Key Management -->
-        <div class="card p-6 rounded-lg mb-8">
+        <!-- API Key Setup (Reintroduced) -->
+        <div class="card p-6 rounded-lg mb-8" id="apiKeySetup">
             <h2 class="text-xl font-semibold mb-4 text-green-300">1. API Key Setup</h2>
             <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-                <input type="text" id="userId" placeholder="Enter User ID (e.g., JaneDoe)" class="p-3 rounded-lg flex-grow bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500">
-                <button onclick="generateKey()" class="btn bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg">
-                    Get/Refresh API Key
+                <input type="text" id="userId" value="Auto-Generated User" disabled class="p-3 rounded-lg flex-grow bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500">
+                <button id="authBtn" class="btn bg-green-700 text-white font-semibold py-3 px-6 rounded-lg disabled:opacity-50" disabled>
+                    Auto-Authenticated
                 </button>
             </div>
             <div id="apiKeyDisplay" class="mt-4 p-3 bg-gray-800 rounded-lg text-sm break-all">
-                API Key: <span id="apiKeyStatus" class="text-red-400">Not set. Please generate a key.</span>
+                API Key: <span id="apiKeyStatus" class="text-yellow-400">Loading Key...</span>
             </div>
             <div id="statusMessage" class="mt-3 text-sm text-red-400 hidden"></div>
         </div>
 
         <!-- Domain Selection and Fetch -->
         <div class="card p-6 rounded-lg mb-8">
-            <h2 class="text-xl font-semibold mb-4 text-green-300">2. Select Quiz</h2>
+            <h2 class="text-xl font-semibold mb-4 text-green-300">2. Select Quiz Parameters</h2>
             <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-4">
-                <select id="domainSelect" class="p-3 rounded-lg flex-grow bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500">
+                <select id="domainSelect" class="p-3 rounded-lg flex-grow bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500" disabled>
                     <option value="">-- Select Domain --</option>
                     <!-- Options populated by JS -->
                 </select>
@@ -88,12 +89,13 @@
                     <option value="">-- Select Difficulty --</option>
                     <!-- Options populated by JS -->
                 </select>
-                <button onclick="loadQuestions()" id="loadQuestionsBtn" class="btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg disabled:opacity-50">
+                <button onclick="loadQuestions()" id="loadQuestionsBtn" class="btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg disabled:opacity-50" disabled>
                     Load Quiz
                 </button>
             </div>
+            <!-- Status message area -->
             <div id="domainOverview" class="mt-4 p-3 bg-gray-800 rounded-lg text-sm">
-                Domain Overview: Loading...
+                Authenticating and loading domains...
             </div>
         </div>
 
@@ -131,7 +133,7 @@
         // Set the API URL to your live Render deployment
         const API_BASE_URL = 'https://fast-quiz-api.onrender.com';
         
-        let API_KEY = sessionStorage.getItem('quizApiKey') || '';
+        let API_KEY = ''; // Automatically generated on init
         let currentDomains = {};
         let activeQuestions = [];
         let activeQuizType = "";
@@ -139,6 +141,7 @@
 
         const elements = {
             userId: document.getElementById('userId'),
+            authBtn: document.getElementById('authBtn'),
             apiKeyStatus: document.getElementById('apiKeyStatus'),
             statusMessage: document.getElementById('statusMessage'),
             domainSelect: document.getElementById('domainSelect'),
@@ -156,10 +159,6 @@
 
         // --- Utility Functions ---
 
-        /**
-         * Shuffles an array (Fisher-Yates algorithm).
-         * @param {Array} array 
-         */
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -167,35 +166,40 @@
             }
         }
 
-        /**
-         * Fetches data from the API with integrated error and auth handling.
-         */
-        async function fetchApi(endpoint, method = 'GET', body = null, requiresAuth = true) {
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+
+        // --- API Communication ---
+
+        async function fetchApi(endpoint, method = 'GET', body = null, requiresAuth = true, retryOnAuth = true) {
             const url = API_BASE_URL + endpoint;
             const headers = { 'Content-Type': 'application/json' };
 
             if (requiresAuth && API_KEY) {
                 headers['X-API-Key'] = API_KEY;
             } else if (requiresAuth && !API_KEY) {
-                elements.statusMessage.textContent = "Error: API Key is missing. Please generate a key first.";
-                elements.statusMessage.classList.remove('hidden');
                 return null;
             }
 
             try {
                 const response = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null, });
+                
                 if (response.ok) return await response.json();
 
                 const errorData = await response.json().catch(() => ({ detail: 'Unknown API error or malformed JSON response.' }));
                 const status = response.status;
                 
-                if (status === 401) {
-                    elements.statusMessage.textContent = `Authentication Error: Invalid or expired API Key. Please regenerate the key.`;
-                    API_KEY = ''; 
-                    sessionStorage.removeItem('quizApiKey');
-                    updateKeyDisplay();
+                if (status === 401 && retryOnAuth) {
+                    const newKeyGenerated = await generateKey(true);
+                    if (newKeyGenerated) {
+                        elements.statusMessage.textContent = `Retrying request with new key...`;
+                        return await fetchApi(endpoint, method, body, requiresAuth, false); 
+                    }
+                    return null;
                 } else if (status === 404) {
-                     elements.statusMessage.textContent = `API Error (404): Resource not found for ${endpoint}.`;
+                    elements.statusMessage.textContent = `API Error (404): Resource not found for ${endpoint}. Check server logs.`;
                 } else {
                     elements.statusMessage.textContent = `API Error (${status}): ${errorData.detail || 'Service returned an error.'}`;
                 }
@@ -203,67 +207,80 @@
                 return null;
             } catch (e) {
                 console.error("API Fetch Error:", e);
-                elements.statusMessage.textContent = `Connection Error: Cannot reach API at ${API_BASE_URL}. Ensure your server is live. (Error: ${e.message})`;
+                elements.statusMessage.textContent = `Connection Error: Cannot reach API at ${API_BASE_URL}. Ensure server is running. (Error: ${e.message})`;
                 elements.statusMessage.classList.remove('hidden');
                 return null;
             }
         }
 
-        function updateKeyDisplay() {
-            if (API_KEY) {
-                elements.apiKeyStatus.textContent = API_KEY;
-                elements.apiKeyStatus.classList.remove('text-red-400', 'pulse-animation');
-                elements.apiKeyStatus.classList.add('text-green-400');
-            } else {
-                elements.apiKeyStatus.textContent = 'Not set. Please generate a key.';
-                elements.apiKeyStatus.classList.add('text-red-400');
-                elements.apiKeyStatus.classList.remove('text-green-400');
-            }
-        }
-
-        // --- Core Application Logic (Auth, Domains, Loading) ---
-
-        async function generateKey() {
-            elements.statusMessage.classList.add('hidden');
-            const user = elements.userId.value.trim();
-
-            if (!user) {
-                elements.statusMessage.textContent = "Please enter a User ID.";
-                elements.statusMessage.classList.remove('hidden');
-                return;
+        async function generateKey(silent = false) {
+            const user = "AutoQuizUser01"; 
+            if (!silent) {
+                 elements.domainOverview.innerHTML = `<p class="text-center text-yellow-400"><span class="pulse-animation">Authenticating...</span></p>`;
             }
 
-            elements.apiKeyStatus.innerHTML = '<span class="pulse-animation">Generating...</span>';
-
-            const data = await fetchApi(`/generate-key/?user=${user}`, 'POST', null, false);
+            const data = await fetchApi(`/generate-key/?user=${user}`, 'POST', null, false, false); 
 
             if (data && data.api_key) {
                 API_KEY = data.api_key;
-                sessionStorage.setItem('quizApiKey', API_KEY);
-                updateKeyDisplay();
-                elements.statusMessage.textContent = `Success! API Key generated for user: ${data.user}.`;
-                elements.statusMessage.classList.remove('hidden', 'text-red-400');
-                elements.statusMessage.classList.add('text-green-400');
-                await loadDomains();
+                
+                // Update new auth UI status
+                elements.apiKeyStatus.textContent = '✅ Authenticated';
+                elements.apiKeyStatus.classList.remove('text-yellow-400');
+                elements.apiKeyStatus.classList.add('text-green-400');
+                elements.authBtn.textContent = 'Auto-Authenticated';
+                elements.authBtn.classList.add('bg-green-700');
+                
+                if (!silent) {
+                    elements.domainOverview.innerHTML = `<p class="text-center text-green-400">Authentication successful. Loading quiz data...</p>`;
+                }
+                elements.statusMessage.classList.add('hidden');
+                return true; 
             } else {
-                elements.apiKeyStatus.innerHTML = 'Generation failed.';
+                elements.domainOverview.innerHTML = `<p class="text-center text-red-400">CRITICAL: Failed to connect to API and generate key.</p>`;
+                elements.apiKeyStatus.textContent = '❌ Failed';
+                elements.apiKeyStatus.classList.add('text-red-400');
+                return false; 
             }
         }
 
         async function loadDomains() {
-            elements.domainOverview.innerHTML = '<div class="flex space-x-2"><div class="skeleton-line w-1/3"></div><div class="skeleton-line w-1/4"></div></div>';
+            elements.domainOverview.innerHTML = '<p class="text-center"><span class="pulse-animation">Fetching domain list...</span></p>';
             elements.statusMessage.classList.add('hidden');
+            let data = null;
+            let attempts = 0;
+            const maxAttempts = 3;
 
-            const data = await fetchApi('/domains/');
+            while (data === null && attempts < maxAttempts) {
+                attempts++;
+                data = await fetchApi('/domains/', 'GET', null, true, false); 
+
+                if (data === null) {
+                    elements.domainOverview.innerHTML = `<p class="text-center text-yellow-400">Server stabilizing... Retrying domain fetch (Attempt ${attempts}/${maxAttempts})...</p>`;
+                    if (attempts < maxAttempts) {
+                        await delay(3000); 
+                    }
+                }
+            }
 
             if (data) {
-                currentDomains = data;
-                populateDomainSelect(data);
-                displayDomainOverview(data);
+                // Filter out the DBMS domain before populating the dropdown
+                const filteredDomains = {};
+                for (const domainKey in data) {
+                    if (domainKey !== 'DBMS') {
+                        filteredDomains[domainKey] = data[domainKey];
+                    }
+                }
+
+                currentDomains = filteredDomains;
+                populateDomainSelect(filteredDomains);
+                elements.domainOverview.textContent = "Domains loaded successfully. Select a quiz category above.";
             } else {
-                elements.domainOverview.textContent = "Failed to load domain overview. (Requires API Key)";
+                elements.domainOverview.textContent = "Failed to load domain list after multiple attempts. Is the API server running and accessible?";
             }
         }
+
+        // --- UI Logic ---
 
         function populateDomainSelect(data) {
             elements.domainSelect.innerHTML = '<option value="">-- Select Domain --</option>';
@@ -275,26 +292,7 @@
             }
             elements.domainSelect.disabled = false;
         }
-
-        function displayDomainOverview(data) {
-            let html = '<table class="w-full text-left">';
-            html += '<thead><tr class="text-green-300 border-b border-gray-700"><th>Domain</th><th>Easy (MCQ)</th><th>Medium (Descriptive)</th><th>Hard (Descriptive)</th></tr></thead>';
-            html += '<tbody>';
-            
-            for (const domain in data) {
-                const counts = data[domain];
-                html += `<tr class="border-b border-gray-700 hover:bg-gray-700/50">
-                            <td class="py-2 font-semibold">${domain}</td>
-                            <td>${counts.easy || 0}</td>
-                            <td>${counts.medium || 0}</td>
-                            <td>${counts.hard || 0}</td>
-                        </tr>`;
-            }
-
-            html += '</tbody></table>';
-            elements.domainOverview.innerHTML = html;
-        }
-
+        
         function handleDomainChange() {
             const domain = elements.domainSelect.value;
             elements.categorySelect.innerHTML = '<option value="">-- Select Difficulty --</option>';
@@ -315,12 +313,14 @@
         }
         
         function handleCategoryChange() {
-            elements.loadQuestionsBtn.disabled = !(elements.domainSelect.value && elements.categorySelect.value);
+            elements.loadQuestionsBtn.disabled = !(elements.domainSelect.value && elements.categorySelect.value && API_KEY);
         }
+
+        // --- Loading and Rendering Quiz ---
 
         async function loadQuestions() {
             elements.statusMessage.classList.add('hidden');
-            const domain = elements.domainSelect.value;
+            let domain = elements.domainSelect.value; 
             const category = elements.categorySelect.value;
             const maxQs = MAX_QUESTIONS[category];
 
@@ -330,34 +330,57 @@
                 return;
             }
             
-            elements.questionContainer.innerHTML = '<p class="text-center"><span class="pulse-animation">Fetching all questions...</span></p>';
+            // CRITICAL FIX: Ensure the domain casing matches the Python dictionary key for the request URL
+            // This is done to prevent the 404 error caused by case-sensitive Python dictionary lookup
+            if (domain.toUpperCase() === "DBMS" || domain.toLowerCase() === "c++") {
+                domain = domain.toUpperCase() === "DBMS" ? "DBMS" : "C++";
+            } else {
+                // For other domains (Python, Java, C, Cloud) which are capitalized in API structure:
+                domain = domain.charAt(0).toUpperCase() + domain.slice(1).toLowerCase();
+            }
+            
+            elements.questionContainer.innerHTML = `<p class="text-center"><span class="pulse-animation">Fetching questions for ${domain}/${category}...</span></p>`;
             elements.loadQuestionsBtn.disabled = true;
 
-            const data = await fetchApi(`/get-questions/${domain}/${category}`);
+            let data = null;
+            let attempts = 0;
+            const maxAttempts = 3;
+
+            while (data === null && attempts < maxAttempts) {
+                attempts++;
+                data = await fetchApi(`/get-questions/${domain}/${category}`, 'GET', null, true, false); 
+
+                if (data === null) {
+                    elements.questionContainer.innerHTML = `<p class="text-center text-yellow-400">Server stabilizing... Retrying quiz fetch (Attempt ${attempts}/${maxAttempts})...</p>`;
+                    if (attempts < maxAttempts) {
+                        await delay(3000); 
+                    }
+                }
+            }
+
 
             if (data && data.questions) {
-                // 1. Shuffle all questions fetched
                 shuffleArray(data.questions);
 
-                // 2. Select the required subset (e.g., 20, 10, or 5)
                 activeQuestions = data.questions.slice(0, maxQs);
                 activeQuizType = data.type;
 
                 renderQuiz(domain, category, activeQuestions, activeQuizType);
             } else if (data) {
                  elements.questionContainer.innerHTML = '<p class="text-red-400">Received data but no questions found.</p>';
+            } else {
+                 elements.questionContainer.innerHTML = `<p class="text-red-400">Failed to load quiz after ${maxAttempts} attempts. The selected quiz might not exist on the server.</p>`;
             }
 
             elements.loadQuestionsBtn.disabled = false;
         }
-
-        // --- Rendering the Quiz (Input Form) ---
 
         function renderQuiz(domain, category, questions, type) {
             elements.resultsContainer.classList.add('hidden');
             elements.quizForm.classList.remove('hidden');
             elements.quizTitle.textContent = `${domain} / ${category.toUpperCase()} (${type})`;
             elements.quizTotalQs.textContent = questions.length;
+            elements.domainOverview.classList.add('hidden'); // Hide status message while quiz is active
 
             let html = '';
 
@@ -367,40 +390,22 @@
                 
                 if (type === "MCQ") {
                     const questionText = q.question || q;
-                    // For legacy Python MCQs (string format): extract question and options
-                    let currentQuestion = questionText;
-                    let currentOptions = q.options || [];
-                    let isLegacy = false;
+                    const currentOptions = q.options || [];
 
-                    if (!q.options && typeof q === 'string') {
-                        isLegacy = true;
-                        // Regex to split question text from options (a)...(b)...
-                        const match = questionText.match(/(.*)\s+\((a)\)/i);
-                        if (match) {
-                            currentQuestion = match[1].trim();
-                            // FIX: Corrected regex for splitting options
-                            const optionsString = questionText.substring(match[1].length).trim();
-                            currentOptions = optionsString.split(/\s*(?=\([a-d]\))/).map(s => s.trim()).filter(s => s);
-                        } else {
-                            currentQuestion = questionText;
-                        }
-                    }
-
-                    html += `<p class="font-semibold text-base mb-2">Q${qNum}: ${currentQuestion.replace('✅', '').trim()}</p>`;
+                    html += `<p class="font-semibold text-base mb-2">Q${qNum}: ${questionText.trim()}</p>`;
                     
                     html += '<ul class="list-none ml-4 space-y-2 mt-3 text-gray-300">';
                     currentOptions.forEach((option, optIndex) => {
-                        const optionValue = option.replace(/^\((.)\)\s*/, '$1').trim();
-                        const optionLetter = option.match(/^\((.)\)/) ? option.match(/^\((.)\)/)[1] : String.fromCharCode(97 + optIndex);
+                        const optionLetter = String.fromCharCode(97 + optIndex);
                         
                         html += `<li>
                                     <label class="inline-flex items-center space-x-2">
                                         <input type="radio" 
                                                name="question_${index}" 
-                                               value="${optionValue}" 
+                                               value="${option.trim()}" 
                                                data-option-letter="${optionLetter}"
                                                class="form-radio h-4 w-4 text-green-600 bg-gray-600 border-gray-500 focus:ring-green-500">
-                                        <span>${option}</span>
+                                        <span>(${optionLetter}) ${option}</span>
                                     </label>
                                 </li>`;
                     });
@@ -408,7 +413,8 @@
 
                 } else {
                     // Handle Descriptive format
-                    html += `<p class="font-semibold text-base mb-2">Q${qNum}: ${q.question}</p>`;
+                    const questionText = q.question || q;
+                    html += `<p class="font-semibold text-base mb-2">Q${qNum}: ${questionText.trim()}</p>`;
                     html += `<textarea name="question_${index}" 
                                        rows="4" 
                                        placeholder="Type your detailed answer here..." 
@@ -428,69 +434,34 @@
             const form = document.getElementById('quizForm');
             const formData = new FormData(form);
             let score = 0;
-            let totalPossibleScore = activeQuestions.length;
+            const totalPossibleScore = activeQuestions.length;
             let resultsHtml = '';
             
-            // Hide the quiz, show the results
             elements.quizForm.classList.add('hidden');
             elements.resultsContainer.classList.remove('hidden');
             elements.resultsDetails.innerHTML = '';
             
             activeQuestions.forEach((q, index) => {
-                const qNum = index + 1;
                 let isCorrect = false;
-                let userAnswer = "";
-                let originalAnswer = q.answer || q;
-                let questionText = q.question || q;
-
+                const qNum = index + 1;
                 const questionName = `question_${index}`;
+                
+                let userAnswer = formData.get(questionName) || "";
+                const originalAnswer = (q.answer || "").toString().trim();
+                const questionText = (q.question || q).toString(); 
 
                 if (activeQuizType === "MCQ") {
-                    userAnswer = formData.get(questionName) || "No Answer Selected";
-                    
-                    // Standard MCQ (dict format)
-                    if (q.answer) {
-                        originalAnswer = q.answer.trim();
-                        isCorrect = (userAnswer.toLowerCase() === originalAnswer.toLowerCase());
-                    } else if (typeof q === 'string') {
-                        // Legacy Python MCQ (string format with ✅)
-                        const match = q.match(/\((.)\)\s*(.*?) ✅/);
-                        if (match) {
-                            originalAnswer = match[2].trim(); // The answer text
-                            const selectedElement = document.querySelector(`input[name="${questionName}"]:checked`);
-                            if(selectedElement) {
-                                // Compare the option letter or the option text
-                                const selectedOptionLetter = selectedElement.dataset.optionLetter;
-                                const answerLetterMatch = q.match(/\((.)\) .*? ✅/);
-
-                                if (answerLetterMatch) {
-                                    const correctLetter = answerLetterMatch[1].toLowerCase();
-                                    isCorrect = (selectedOptionLetter.toLowerCase() === correctLetter);
-                                }
-                                // Fallback: compare the selected text
-                                if (!isCorrect) {
-                                     isCorrect = (userAnswer.toLowerCase() === originalAnswer.toLowerCase());
-                                }
-                            }
-                        }
-                    }
+                    userAnswer = userAnswer.trim();
+                    // Direct string comparison for MCQ answers
+                    isCorrect = (userAnswer.toLowerCase() === originalAnswer.toLowerCase());
 
                 } else {
-                    // Descriptive Type (medium/hard)
-                    userAnswer = formData.get(questionName).trim();
-                    originalAnswer = q.answer.trim();
-                    
-                    // Simple credit logic for descriptive (for this exercise, assume correct if answer is not empty)
-                    isCorrect = userAnswer.length > 5; // Placeholder for subjective scoring
-
-                    if (isCorrect) {
-                        // Descriptive questions are given credit if they show effort
-                        score += 1;
-                    }
-                    totalPossibleScore = activeQuestions.length; // Max score equals number of questions
+                    // Descriptive: Simple length check for giving credit
+                    userAnswer = userAnswer.trim();
+                    isCorrect = userAnswer.length > 5;
                 }
-
-                if (isCorrect && activeQuizType === "MCQ") {
+                
+                if (isCorrect) {
                     score += 1;
                 }
                 
@@ -498,11 +469,11 @@
 
                 const cardClass = isCorrect ? 'result-correct' : 'result-incorrect';
                 const icon = isCorrect ? '✅ Correct' : '❌ Incorrect / Partial Credit';
-                const iconColor = isCorrect ? 'text-green-400' : 'text-red-440';
+                const iconColor = isCorrect ? 'text-green-400' : 'text-red-400';
                 
                 resultsHtml += `<div class="p-4 card rounded-lg shadow-md ${cardClass}">
                                     <p class="font-bold text-lg ${iconColor}">${icon} (Q${qNum})</p>
-                                    <p class="font-semibold text-base mt-2">${questionText.replace('✅', '').trim()}</p>
+                                    <p class="font-semibold text-base mt-2">${questionText.trim()}</p>
                                     
                                     <div class="mt-4 p-3 bg-gray-800 rounded-lg text-sm space-y-2">
                                         <p class="font-bold text-gray-400">Your Answer:</p>
@@ -510,8 +481,8 @@
                                     </div>
 
                                     <div class="mt-2 p-3 bg-gray-800 rounded-lg text-sm space-y-2">
-                                        <p class="font-bold text-green-400">Original Answer:</p>
-                                        <pre class="whitespace-pre-wrap">${originalAnswer}</pre>
+                                        <p class="font-bold text-green-400">Correct Answer:</p>
+                                        <pre class="whitespace-pre-wrap text-green-300">${originalAnswer}</pre>
                                     </div>
                                 </div>`;
             });
@@ -519,25 +490,22 @@
             // Update Summary
             elements.resultsDetails.innerHTML = resultsHtml;
             elements.scoreSummary.innerHTML = `You scored: <span class="text-yellow-400">${score}</span> out of <span class="text-yellow-400">${totalPossibleScore}</span>.`;
-            elements.scoreSummary.innerHTML += `<p class="text-sm text-gray-400 mt-2">*(For Descriptive questions, credit is given if your answer is greater than 5 characters long.)</p>`;
+            if (activeQuizType !== "MCQ") {
+                elements.scoreSummary.innerHTML += `<p class="text-sm text-gray-400 mt-2">*(For descriptive, credit was given if your answer was more than 5 characters long.)</p>`;
+            }
 
-            // Scroll to top of results
             elements.resultsContainer.scrollIntoView({ behavior: 'smooth' });
         }
 
 
         // --- Initialization ---
 
-        function init() {
-            // Check for existing API Key
-            if (API_KEY) {
-                updateKeyDisplay();
-                loadDomains();
-                elements.userId.value = "Session User"; // Placeholder to indicate key is set
-            } else {
-                // If no key exists, only update the display, wait for user to generate key
-                updateKeyDisplay();
-                loadDomains(); 
+        async function init() {
+            // Initiate the key generation process immediately and silently
+            const keyGenerated = await generateKey();
+            if (keyGenerated) {
+                // Only proceed to load domains if key generation was successful
+                await loadDomains();
             }
 
             // Event Listeners

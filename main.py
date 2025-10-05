@@ -12,7 +12,7 @@ app = FastAPI(
 )
 
 # --- CORS Configuration (Allows frontend access) ---
-# Allow all origins for development simplicity
+# Allow all origins (for live deployment testing)
 origins = ["*"] 
 
 app.add_middleware(
@@ -30,7 +30,7 @@ api_keys: Dict[str, str] = {}
 limits = {"easy": 100, "medium": 100, "hard": 50}
 
 # Questions Database (A comprehensive collection of 1000 questions)
-# NOTE: Using a standardized dict format for all questions (including Python easy MCQs)
+# NOTE: All questions are in a consistent object format: {"question": "...", "options": [...], "answer": "..."}
 questions_db: Dict[str, Dict[str, Dict[str, Any]]] = {
     "Python": {
         "easy": {
@@ -143,7 +143,7 @@ questions_db: Dict[str, Dict[str, Dict[str, Any]]] = {
                 {"question": "How does *args and **kwargs work internally?", "answer": "*args packs positional arguments as tuple; **kwargs packs keyword arguments as dict."},
                 {"question": "Explain function annotations.", "answer": "Optional metadata for parameters and return values. Example:\n\ndef add(a:int, b:int) -> int: return a+b"},
                 {"question": "Explain Python’s import system and sys.path.", "answer": "Python searches modules in directories listed in sys.path. Can import packages using relative or absolute paths."},
-                {"question": "Difference between absolute and relative imports.", "answer": "Absolute: full package path. Relative: using . or .. to refer to current or parent package."},
+                {"question": "Difference between absolute and relative imports.", "answer": "Absolute: full package path. Relative: using . or .. for current or parent package."},
                 {"question": "Explain Python’s __slots__.", "answer": "Restricts dynamic creation of attributes to save memory.\nclass A: __slots__=['x','y']"},
                 {"question": "Difference between shallow copy and copy-on-write.", "answer": "Shallow copy copies references; copy-on-write defers copying until modification occurs."},
                 {"question": "Explain Python’s list comprehensions and generator expressions.", "answer": "List comprehension: [x*x for x in range(5)] → list.\nGenerator expression: (x*x for x in range(5)) → generator (lazy evaluation)."},
@@ -663,116 +663,6 @@ questions_db: Dict[str, Dict[str, Dict[str, Any]]] = {
                 {"question": "Which C++ version introduced auto keyword for type inference?", "options": ["C++98", "C++03", "C++11", "C++14"], "answer": "C++11"},
                 {"question": "Which C++ version introduced lambda expressions?", "options": ["C++98", "C++03", "C++11", "C++17"], "answer": "C++11"}
             ]
-        },
-        "medium": {
-            "type": "Descriptive",
-            "questions": [
-                {"question": "Explain the difference between a class and an object.", "answer": "Class: Blueprint for objects; defines data members and member functions.\nObject: Instance of a class; occupies memory and can use class methods."},
-                {"question": "What is a constructor?", "answer": "Special member function invoked automatically when an object is created; used to initialize objects."},
-                {"question": "Explain destructor in C++.", "answer": "Special member function called automatically when an object goes out of scope; used to release resources."},
-                {"question": "What is copy constructor?", "answer": "Constructor that initializes a new object as a copy of an existing object."},
-                {"question": "What is the difference between shallow and deep copy?", "answer": "Shallow copy: Copies member values directly; pointers may reference same memory.\nDeep copy: Copies pointed data to new memory; avoids shared references."},
-                {"question": "Explain the concept of encapsulation.", "answer": "Wrapping data and functions in a class and restricting direct access using access specifiers (private, public, protected)."},
-                {"question": "Define inheritance and its types in C++.", "answer": "Mechanism to create new class (derived) from existing class (base). Types: Single, Multiple, Multilevel, Hierarchical, Hybrid."},
-                {"question": "What is polymorphism in C++?", "answer": "Ability of a function or object to take multiple forms. Types: Compile-time (function overloading, operator overloading), Run-time (virtual functions, dynamic binding)."},
-                {"question": "Explain abstraction in C++.", "answer": "Hiding implementation details and exposing only essential features using abstract classes and pure virtual functions."},
-                {"question": "Difference between public, private, and protected access specifiers.", "answer": "Public: Accessible everywhere.\nPrivate: Accessible only within class.\nProtected: Accessible within class and derived classes."},
-                {"question": "What is function overloading?", "answer": "Defining multiple functions with the same name but different parameter lists."},
-                {"question": "Explain operator overloading with example.", "answer": "Redefining operator behavior for user-defined types.\nExample: Complex + Complex to add two complex numbers."},
-                {"question": "Difference between function overloading and overriding.", "answer": "Overloading: Compile-time; same function name, different parameters.\nOverriding: Run-time; derived class provides new implementation for base class virtual function."},
-                {"question": "What is inline function?", "answer": "Function expanded at the point of call to reduce function call overhead."},
-                {"question": "Explain default, constant, and reference parameters.", "answer": "Default: Provided default values if arguments omitted.\nConstant: Cannot modify passed value inside function.\nReference: Function can modify original variable."},
-                {"question": "What is recursion?", "answer": "Function calling itself until base condition is met."},
-                {"question": "Difference between call by value and call by reference.", "answer": "Value: Copies argument; changes do not affect original.\nReference: Passes address; changes affect original variable."},
-                {"question": "Explain friend function.", "answer": "Non-member function that can access private and protected members of a class."},
-                {"question": "What is a virtual function?", "answer": "Member function that supports run-time polymorphism; resolved using dynamic binding."},
-                {"question": "Difference between pure virtual function and virtual function.", "answer": "Virtual: Has implementation; can be overridden.\nPure virtual function: No implementation; makes class abstract."},
-                {"question": "Explain function template with example.", "answer": "Generic function to work with multiple data types.\nExample:\ntemplate <typename T>\nT add(T a, T b) { return a + b; }"},
-                {"question": "Explain class template with example.", "answer": "Generic class for multiple data types.\nExample:\ntemplate <class T>\nclass Box { T value; public: void set(T v) { value = v; } T get() { return value; } };"},
-                {"question": "Difference between template and macro.", "answer": "Template: Type-safe, resolved at compile-time.\nMacro: Preprocessor directive; not type-safe."},
-                {"question": "What is template specialization?", "answer": "Custom implementation of template for a specific data type."},
-                {"question": "Difference between function template and class template.", "answer": "Function template: Generic functions.\nClass template: Generic classes."},
-                {"question": "What is STL?", "answer": "Collection of C++ template classes for data structures and algorithms."},
-                {"question": "Explain vector in STL.", "answer": "Dynamic array supporting random access, automatic resizing, and iterators."},
-                {"question": "Difference between vector and array.", "answer": "Vector: Dynamic size, provides methods like push_back(), pop_back().\nArray: Fixed size, cannot resize dynamically."},
-                {"question": "Explain list in STL.", "answer": "Doubly linked list supporting fast insertion/deletion anywhere."},
-                {"question": "Difference between list and vector.", "answer": "List: Efficient insert/delete, slower random access.\nVector: Fast random access, slower insert/delete in middle."},
-                {"question": "What is map in STL?", "answer": "Associative container storing key-value pairs in sorted order; keys are unique."},
-                {"question": "Difference between map and unordered_map.", "answer": "Map: Sorted by key; uses balanced tree.\nUnordered_map: Not sorted; uses hash table; faster access."},
-                {"question": "Explain stack in STL.", "answer": "LIFO data structure supporting push(), pop(), top()."},
-                {"question": "Explain queue in STL.", "answer": "FIFO data structure supporting push(), pop(), front(), back()."},
-                {"question": "What is iterator in STL?", "answer": "Object that points to container elements; used for traversal and access."},
-                {"question": "Difference between text and binary files in C++.", "answer": "Text: Stores characters; readable.\nBinary: Stores data in binary; more efficient."},
-                {"question": "Explain ifstream, ofstream, fstream.", "answer": "ifstream: Input file stream (read).\nofstream: Output file stream (write).\nfstream: Read/write file stream."},
-                {"question": "How to check if a file opened successfully?", "answer": "Using file.is_open() or checking stream object in conditional statement."},
-                {"question": "Explain opening a file in different modes.", "answer": "Modes: ios::in, ios::out, ios::app, ios::binary, ios::ate, ios::trunc."},
-                {"question": "How to read and write binary files?", "answer": "Use read() and write() member functions of fstream."},
-                {"question": "Explain dynamic memory allocation in C++.", "answer": "Using new and delete operators to allocate and free memory at runtime."},
-                {"question": "Difference between malloc/free and new/delete.", "answer": "malloc/free: C-style; no constructor/destructor call; returns void*.\nnew/delete: C++ style; calls constructor/destructor; type-safe."},
-                {"question": "What is RAII in C++?", "answer": "Resource Acquisition Is Initialization; object lifetime manages resource allocation and deallocation automatically."},
-                {"question": "Difference between shallow and deep copy in C++.", "answer": "Shallow: Copies pointer values; shared memory.\nDeep: Copies actual data; independent memory."},
-                {"question": "Explain multiple inheritance and its issues.", "answer": "A class inherits from more than one base class. Issues: ambiguity (diamond problem), solved using virtual inheritance."},
-                {"question": "What is virtual inheritance?", "answer": "Ensures only one copy of base class in multiple inheritance to avoid ambiguity."},
-                {"question": "Explain exception handling in C++.", "answer": "Using try, catch, and throw to handle runtime errors safely."},
-                {"question": "Difference between throw, catch, and finally (C++ equivalent).", "answer": "throw: Raises an exception.\ncatch: Handles exception.\nfinally: C++ does not have finally; destructor or RAII used."},
-                {"question": "Explain smart pointers in C++.", "answer": "Pointer objects that automatically manage memory (unique_ptr, shared_ptr, weak_ptr)."},
-                {"question": "Difference between static and dynamic binding in C++.", "answer": "Static: Function call resolved at compile-time (non-virtual).\nDynamic: Function call resolved at run-time (virtual function)."}
-            ]
-        },
-        "hard": {
-            "type": "Descriptive",
-            "questions": [
-                {"question": "Explain the diamond problem in multiple inheritance and how C++ solves it.", "answer": "Occurs when two classes inherit from the same base, and a derived class inherits both. C++ solves it using virtual inheritance to ensure only one copy of the base class."},
-                {"question": "Difference between virtual, pure virtual, and abstract class.", "answer": "Virtual function: Can be overridden; allows runtime polymorphism.\nPure virtual function: No implementation; makes class abstract.\nAbstract class: Contains at least one pure virtual function; cannot instantiate."},
-                {"question": "Explain object slicing in C++.", "answer": "Assigning a derived object to a base object variable copies only base members; derived members are “sliced off.”"},
-                {"question": "Difference between static, dynamic, and polymorphic binding.", "answer": "Static: Resolved at compile-time.\nDynamic: Resolved at runtime using virtual functions.\nPolymorphic: Enables calling derived class functions through base pointer/reference."},
-                {"question": "What is a virtual destructor and why is it important?", "answer": "Ensures proper cleanup of derived class objects when deleted through base class pointer. Prevents memory leaks."},
-                {"question": "Explain multiple inheritance ambiguity and how to resolve it.", "answer": "Ambiguity occurs when two base classes have same member. Resolved using scope resolution operator or virtual inheritance."},
-                {"question": "Explain covariant return types in C++.", "answer": "Derived class function can override a base class virtual function and return a pointer/reference to derived type instead of base type."},
-                {"question": "Difference between interface and abstract class in C++.", "answer": "Interface: Pure abstract class (all functions pure virtual).\nAbstract class: May have concrete functions along with pure virtual functions."},
-                {"question": "Explain RTTI (Run-Time Type Identification).", "answer": "Mechanism to identify object type at runtime using typeid and dynamic_cast."},
-                {"question": "Explain multiple inheritance vs virtual inheritance in C++.", "answer": "Multiple inheritance: Class inherits from multiple base classes.\nVirtual inheritance: Ensures only one copy of common base class to avoid diamond problem."},
-                {"question": "Explain template metaprogramming.", "answer": "Using templates to perform computations at compile-time rather than runtime (e.g., factorial using templates)."},
-                {"question": "Difference between class template and typename template.", "answer": "class and typename keywords are interchangeable in templates; typename clarifies type parameters in dependent scopes."},
-                {"question": "Explain variadic templates.", "answer": "Templates that accept variable number of arguments, enabling flexible generic programming."},
-                {"question": "What is SFINAE in C++?", "answer": "\"Substitution Failure Is Not An Error\" allows selective template specialization based on conditions."},
-                {"question": "Explain template specialization and partial specialization.", "answer": "Full specialization: Custom template for a specific type.\nPartial specialization: Custom template for a subset of template parameters."},
-                {"question": "Difference between compile-time and run-time polymorphism using templates.", "answer": "Compile-time: Function templates resolved at compile-time.\nRun-time: Virtual functions resolved at runtime."},
-                {"question": "Explain CRTP (Curiously Recurring Template Pattern).", "answer": "Technique where a derived class inherits from a base class template parameterized by the derived class; enables static polymorphism."},
-                {"question": "Explain type traits in C++.", "answer": "Template classes providing information about types at compile-time (e.g., std::is_integral, std::is_pointer)."},
-                {"question": "Difference between vector, deque, and list in STL.", "answer": "Vector: Dynamic array, fast random access, slow insert/delete in middle.\nDeque: Double-ended queue; insert/delete at both ends.\nList: Doubly linked list; fast insert/delete anywhere, slow random access."},
-                {"question": "Explain unordered_map vs map performance.", "answer": "unordered_map: O(1) average access; hash table; no order.\nmap: O(log n) access; balanced tree; sorted keys."},
-                {"question": "Difference between set and multiset.", "answer": "set: Unique elements only.\nmultiset: Allows duplicates; ordered."},
-                {"question": "Explain iterators and iterator invalidation.", "answer": "Iterator points to elements in container. Modifying container may invalidate iterators (e.g., push_back() in vector)."},
-                {"question": "Explain allocator in STL.", "answer": "Manages memory allocation and deallocation for containers."},
-                {"question": "What are functors in STL?", "answer": "Objects that overload operator() and can be used as function objects in algorithms."},
-                {"question": "Difference between std::function, function pointers, and lambda.", "answer": "std::function: Type-erased callable object.\nFunction pointer: Points to function.\nLambda: Anonymous inline function object."},
-                {"question": "Explain move semantics in STL.", "answer": "Enables transfer of resources from one object to another without copying; uses rvalue references."},
-                {"question": "Difference between copy and move constructors.", "answer": "Copy: Creates new object by copying values.\nMove: Transfers resources; efficient for temporary objects."},
-                {"question": "Explain emplace_back() vs push_back() in vector.", "answer": "push_back(): Copies/moves object into container.\nemplace_back(): Constructs object in place, avoids extra copy/move."},
-                {"question": "Explain RAII principle.", "answer": "Resource Acquisition Is Initialization; objects manage resource lifetime, automatically released in destructor."},
-                {"question": "Difference between unique_ptr, shared_ptr, and weak_ptr.", "answer": "unique_ptr: Single ownership; cannot copy.\nshared_ptr: Shared ownership; reference counting.\nweak_ptr: Non-owning reference to shared_ptr; avoids circular reference."},
-                {"question": "What is memory leak and how to prevent it?", "answer": "Unreleased memory after allocation. Prevent using smart pointers or proper delete/free calls."},
-                {"question": "Explain dangling pointer and its prevention.", "answer": "Pointer pointing to deallocated memory. Prevent by setting pointer to nullptr after deletion."},
-                {"question": "Explain memory fragmentation.", "answer": "Free memory scattered into small blocks; reduces allocation efficiency."},
-                {"question": "Difference between stack and heap memory in C++.", "answer": "Stack: Automatic memory; limited size; faster allocation.\nHeap: Dynamic memory; manually managed; larger size."},
-                {"question": "What are rvalue references?", "answer": "References to temporary objects; enable move semantics and perfect forwarding."},
-                {"question": "Explain perfect forwarding.", "answer": "Preserves value category (lvalue/rvalue) of arguments when passing to another function template using std::forward."},
-                {"question": "Explain std::thread in C++.", "answer": "Represents a thread of execution; created with a function or callable object."},
-                {"question": "Difference between join() and detach() in threads.", "answer": "join(): Waits for thread to finish; blocks caller.\ndetach(): Runs thread independently; cannot join later."},
-                {"question": "Explain mutex and lock_guard.", "answer": "mutex: Synchronizes access to shared data.\nlock_guard: RAII wrapper for mutex; locks in constructor, unlocks in destructor."},
-                {"question": "Explain deadlock and its prevention.", "answer": "Two threads wait indefinitely for each other’s resources. Prevention: lock ordering, try_lock, timeout."},
-                {"question": "Explain condition_variable in C++.", "answer": "Synchronization primitive for threads to wait for a condition to be true; works with mutex."},
-                {"question": "Difference between std::async and std::thread.", "answer": "async: Returns future; manages execution automatically.\nthread: Manual thread management; needs join/detach."},
-                {"question": "Explain atomic operations in C++.", "answer": "Operations guaranteed to be performed without interruption; prevents race conditions."},
-                {"question": "Explain thread-safe singleton in C++.", "answer": "Use std::call_once or static local variable with C++11 guarantee for thread-safe initialization."},
-                {"question": "Explain lambda capture by value and by reference.", "answer": "By value [=]: Copies variables into lambda.\nBy reference [&]: Captures variables as references; changes affect original."},
-                {"question": "Difference between constexpr and const.", "answer": "const: Value cannot change; evaluated at runtime.\nconstexpr: Compile-time constant; can be used in constant expressions."},
-                {"question": "Explain noexcept specifier in C++.", "answer": "Indicates function does not throw exceptions; helps optimization."},
-                {"question": "Explain structured bindings in C++17.", "answer": "Allows unpacking tuple-like objects into separate variables.\nauto [x, y] = getPair();"},
-                {"question": "Explain range-based for loop.", "answer": "Iterates over container elements without explicit iterator.\nfor(auto &x : vec) { cout << x; }"},
-                {"question": "Explain move-only types and why they are used.", "answer": "Objects that can be moved but not copied (e.g., unique_ptr); improves performance by avoiding deep copies."}
-            ]
         }
     },
     "DBMS": {
@@ -1190,10 +1080,24 @@ def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")) -> str:
 # Get Questions
 @app.get("/get-questions/{domain}/{category}")
 def get_questions(domain: str, category: str, api_key: str = Depends(verify_api_key)) -> Dict[str, Any]:
-    """Retrieves quiz questions for a specified domain and difficulty category."""
-    domain = domain.capitalize()
+    """Retrieves quiz questions for a specified domain and difficulty category, handling case sensitivity."""
+   
+    # --- Case Correction Logic to map URL input to internal dictionary keys ---
+    # Standardize category to lowercase (easy, medium, hard)
     category = category.lower()
+   
+    # Map domain input to the exact dictionary key (e.g., 'dbms' -> 'DBMS', 'c++' -> 'C++')
+    if domain.lower() == "dbms":
+        domain = "DBMS"
+    elif domain.lower() == "c":
+        domain = "C"
+    elif domain.lower() == "c++":
+        domain = "C++"
+    # Capitalize first letter for all others (Python, Java, Cloud)
+    else:
+        domain = domain.capitalize()
 
+    # --- Data Retrieval ---
     if domain not in questions_db or category not in questions_db[domain]:
         raise HTTPException(status_code=404, detail=f"Domain '{domain}' or Category '{category}' not found.")
 

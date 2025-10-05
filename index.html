@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Technical Quiz Portal</title>
+    <title>Skill Evalutation Tool</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -60,7 +60,7 @@
 <body class="p-4 md:p-8 text-gray-200" oncontextmenu="return false;">
 
     <div class="container mx-auto">
-        <h1 class="text-4xl font-bold mb-8 text-green-400 border-b border-gray-700 pb-3">Technical Quiz Portal</h1>
+        <h1 class="text-4xl font-bold mb-8 text-green-400 border-b border-gray-700 pb-3">Skill Evalutation Tool</h1>
 
         <!-- API Key Setup (Reintroduced) -->
         <div class="card p-6 rounded-lg mb-8" id="apiKeySetup">
@@ -102,8 +102,8 @@
         <!-- Quiz Area -->
         <form id="quizForm" class="card p-6 rounded-lg hidden">
             <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
-                <h2 class="text-2xl font-semibold text-green-300">3. Active Quiz: <span id="quizTitle"></span></h2>
-                <span class="text-xl font-bold text-gray-400">Total Qs: <span id="quizTotalQs"></span></span>
+                <h2 class="text-2xl font-semibold text-green-300">3. Active : <span id="quizTitle"></span></h2>
+                <span class="text-xl font-bold text-gray-400">Total : <span id="quizTotalQs"></span></span>
             </div>
             
             <div id="questionContainer" class="space-y-6">
@@ -111,7 +111,7 @@
             </div>
 
             <button type="button" onclick="submitQuiz()" id="submitQuizBtn" class="mt-8 w-full btn bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg">
-                Submit Quiz and View Score
+                Submit and View Score
             </button>
         </form>
 
@@ -120,7 +120,7 @@
             <h2 class="text-2xl font-semibold text-yellow-400 mb-4 border-b border-gray-700 pb-3">Quiz Results</h2>
             <div id="scoreSummary" class="text-lg font-bold mb-4"></div>
             <button onclick="window.location.reload()" class="btn bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
-                Start New Quiz
+                Start New 
             </button>
             <div id="resultsDetails" class="space-y-6 mt-6">
                 <!-- Detailed results populated here -->
@@ -517,4 +517,5 @@
     </script>
 </body>
 </html>
+
 

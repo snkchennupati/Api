@@ -305,7 +305,7 @@
                     const maxQs = MAX_QUESTIONS[category] || categories[category];
                     const option = document.createElement('option');
                     option.value = category;
-                    option.textContent = `${category.charAt(0).toUpperCase() + category.slice(1)} (Will load ${maxQs} Qs)`;
+                    option.textContent = `${category.charAt(0).toUpperCase() + category.slice(1)} ( ${maxQs} Qs)`;
                     elements.categorySelect.appendChild(option);
                 }
                 elements.categorySelect.disabled = false;
@@ -517,5 +517,6 @@
     </script>
 </body>
 </html>
+
 
 
